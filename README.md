@@ -1,6 +1,6 @@
-# Claude Plugins
+# cbarker's Claude Toolkit
 
-A collection of reusable Claude Code customizations: skills, agents, and commands.
+A personal collection of reusable Claude Code customizations: skills, agents, and commands.
 
 ## What's Included
 
@@ -47,34 +47,34 @@ A collection of reusable Claude Code customizations: skills, agents, and command
 ### Option 1: Clone to your home directory (global)
 
 ```bash
-# Clone to ~/.claude-plugins
-git clone https://github.com/cbarker95/claude-plugins.git ~/.claude-plugins
+# Clone to ~/.cbarker-claude-toolkit
+git clone https://github.com/cbarker95/cbarker-claude-toolkit.git ~/.cbarker-claude-toolkit
 
 # Symlink into your global Claude config
-ln -s ~/.claude-plugins/.claude/* ~/.claude/
+ln -s ~/.cbarker-claude-toolkit/.claude/* ~/.claude/
 ```
 
 ### Option 2: Add as a git submodule (per-project)
 
 ```bash
 # Add to your project
-git submodule add https://github.com/cbarker95/claude-plugins.git .claude-plugins
+git submodule add https://github.com/cbarker95/cbarker-claude-toolkit.git .cbarker-claude-toolkit
 
 # Symlink into your project's .claude directory
 mkdir -p .claude
-ln -s ../.claude-plugins/.claude/* .claude/
+ln -s ../.cbarker-claude-toolkit/.claude/* .claude/
 ```
 
 ### Option 3: Copy what you need
 
 ```bash
 # Clone temporarily
-git clone https://github.com/cbarker95/claude-plugins.git /tmp/claude-plugins
+git clone https://github.com/cbarker95/cbarker-claude-toolkit.git /tmp/cbarker-claude-toolkit
 
 # Copy specific skills/agents/commands
-cp -r /tmp/claude-plugins/.claude/skills/frontend-design .claude/skills/
-cp /tmp/claude-plugins/.claude/agents/design-iterator.md .claude/agents/
-cp /tmp/claude-plugins/.claude/commands/a11y.md .claude/commands/
+cp -r /tmp/cbarker-claude-toolkit/.claude/skills/frontend-design .claude/skills/
+cp /tmp/cbarker-claude-toolkit/.claude/agents/design-iterator.md .claude/agents/
+cp /tmp/cbarker-claude-toolkit/.claude/commands/a11y.md .claude/commands/
 ```
 
 ## Usage
@@ -98,7 +98,7 @@ Agents are used automatically by Claude when appropriate. They can also be invok
 ## Structure
 
 ```
-claude-plugins/
+cbarker-claude-toolkit/
 └── .claude/
     ├── agents/          # 13 specialized agents
     ├── commands/        # 7 slash commands

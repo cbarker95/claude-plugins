@@ -1,10 +1,10 @@
 {
-  "name": "claude-plugins",
-  "displayName": "Claude Development Toolkit",
-  "description": "Reusable Claude Code skills, agents, and commands for design systems, frontend development, and agent-native architecture",
+  "name": "cbarker-claude-toolkit",
+  "displayName": "cbarker's Claude Toolkit",
+  "description": "Personal collection of Claude Code skills, agents, and commands for design systems, frontend development, and agent-native architecture",
   "version": "1.0.0",
   "author": "cbarker95",
-  "repository": "https://github.com/cbarker95/claude-plugins",
+  "repository": "https://github.com/cbarker95/cbarker-claude-toolkit",
   "skills": [
     {
       "name": "atomic-design-system",
