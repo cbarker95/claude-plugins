@@ -48,7 +48,7 @@ A collection of reusable Claude Code customizations: skills, agents, and command
 
 ```bash
 # Clone to ~/.claude-plugins
-git clone https://github.com/YOUR_USERNAME/claude-plugins.git ~/.claude-plugins
+git clone https://github.com/cbarker95/claude-plugins.git ~/.claude-plugins
 
 # Symlink into your global Claude config
 ln -s ~/.claude-plugins/.claude/* ~/.claude/
@@ -58,7 +58,7 @@ ln -s ~/.claude-plugins/.claude/* ~/.claude/
 
 ```bash
 # Add to your project
-git submodule add https://github.com/YOUR_USERNAME/claude-plugins.git .claude-plugins
+git submodule add https://github.com/cbarker95/claude-plugins.git .claude-plugins
 
 # Symlink into your project's .claude directory
 mkdir -p .claude
@@ -69,7 +69,7 @@ ln -s ../.claude-plugins/.claude/* .claude/
 
 ```bash
 # Clone temporarily
-git clone https://github.com/YOUR_USERNAME/claude-plugins.git /tmp/claude-plugins
+git clone https://github.com/cbarker95/claude-plugins.git /tmp/claude-plugins
 
 # Copy specific skills/agents/commands
 cp -r /tmp/claude-plugins/.claude/skills/frontend-design .claude/skills/
