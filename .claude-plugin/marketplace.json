@@ -1,46 +1,53 @@
 {
-  "name": "cbarker-claude-toolkit",
-  "displayName": "cbarker's Claude Toolkit",
-  "description": "Personal collection of Claude Code skills, agents, and commands for design systems, frontend development, and agent-native architecture",
-  "version": "1.0.0",
-  "author": "cbarker95",
-  "repository": "https://github.com/cbarker95/cbarker-claude-toolkit",
-  "skills": [
+  "owner": {
+    "name": "cbarker95",
+    "url": "https://github.com/cbarker95"
+  },
+  "plugins": [
     {
-      "name": "atomic-design-system",
-      "path": ".claude/skills/atomic-design-system"
-    },
-    {
-      "name": "agent-native-architecture",
-      "path": ".claude/skills/agent-native-architecture"
-    },
-    {
-      "name": "frontend-design",
-      "path": ".claude/skills/frontend-design"
+      "name": "cbarker-claude-toolkit",
+      "displayName": "cbarker's Claude Toolkit",
+      "description": "Personal collection of Claude Code skills, agents, and commands for design systems, frontend development, and agent-native architecture",
+      "version": "1.0.0",
+      "repository": "https://github.com/cbarker95/cbarker-claude-toolkit",
+      "skills": [
+        {
+          "name": "atomic-design-system",
+          "path": ".claude/skills/atomic-design-system"
+        },
+        {
+          "name": "agent-native-architecture",
+          "path": ".claude/skills/agent-native-architecture"
+        },
+        {
+          "name": "frontend-design",
+          "path": ".claude/skills/frontend-design"
+        }
+      ],
+      "agents": [
+        ".claude/agents/accessibility-checker.md",
+        ".claude/agents/atomic-compliance-scorer.md",
+        ".claude/agents/atomic-migration-planner.md",
+        ".claude/agents/best-practices-researcher.md",
+        ".claude/agents/component-hierarchy-analyzer.md",
+        ".claude/agents/design-implementation-reviewer.md",
+        ".claude/agents/design-iterator.md",
+        ".claude/agents/design-reviewer.md",
+        ".claude/agents/figma-design-sync.md",
+        ".claude/agents/framework-docs-researcher.md",
+        ".claude/agents/git-history-analyzer.md",
+        ".claude/agents/repo-research-analyst.md",
+        ".claude/agents/token-auditor.md"
+      ],
+      "commands": [
+        ".claude/commands/a11y.md",
+        ".claude/commands/agent-native-audit.md",
+        ".claude/commands/atomic-audit.md",
+        ".claude/commands/atomic-init.md",
+        ".claude/commands/atomic-migrate.md",
+        ".claude/commands/check.md",
+        ".claude/commands/compare.md"
+      ]
     }
-  ],
-  "agents": [
-    ".claude/agents/accessibility-checker.md",
-    ".claude/agents/atomic-compliance-scorer.md",
-    ".claude/agents/atomic-migration-planner.md",
-    ".claude/agents/best-practices-researcher.md",
-    ".claude/agents/component-hierarchy-analyzer.md",
-    ".claude/agents/design-implementation-reviewer.md",
-    ".claude/agents/design-iterator.md",
-    ".claude/agents/design-reviewer.md",
-    ".claude/agents/figma-design-sync.md",
-    ".claude/agents/framework-docs-researcher.md",
-    ".claude/agents/git-history-analyzer.md",
-    ".claude/agents/repo-research-analyst.md",
-    ".claude/agents/token-auditor.md"
-  ],
-  "commands": [
-    ".claude/commands/a11y.md",
-    ".claude/commands/agent-native-audit.md",
-    ".claude/commands/atomic-audit.md",
-    ".claude/commands/atomic-init.md",
-    ".claude/commands/atomic-migrate.md",
-    ".claude/commands/check.md",
-    ".claude/commands/compare.md"
   ]
 }
