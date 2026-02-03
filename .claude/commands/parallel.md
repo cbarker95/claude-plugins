@@ -25,7 +25,9 @@ Manages git worktrees for multi-agent parallel development. Can spawn background
 
 ## Subcommand: spawn (Automated Parallel Execution)
 
-Creates worktrees and spawns background Task agents to work in parallel. This is the recommended approach for automated parallel development.
+Creates worktrees, generates task prompts, and opens Terminal windows where Claude instances work in parallel. The user approves permissions in each terminal as agents work.
+
+**Why terminal tabs instead of background agents:** Background Task agents cannot get user permission prompts — Bash and Write tools are auto-denied when prompts are unavailable. Interactive terminals solve this.
 
 ### Workflow
 
@@ -59,87 +61,106 @@ git worktree add ../${PROJECT}-task-1 -b feature-task-1
 git worktree add ../${PROJECT}-task-2 -b feature-task-2
 ```
 
-#### 3. Spawn Background Agents
+#### 3. Generate Task Prompts
 
-For each worktree, spawn a Task agent in the background:
+Write a `.claude-task.md` file in each worktree with the full task specification:
 
-```typescript
-// Spawn agent for worktree 1
-Task({
-  subagent_type: "general-purpose",
-  run_in_background: true,
-  prompt: `You are working in worktree: /path/to/${PROJECT}-task-1
+```bash
+# Write task prompt for worktree 1
+cat > ../${PROJECT}-task-1/.claude-task.md << 'EOF'
+# Task: [Task Name]
+
+You are working in worktree: /path/to/${PROJECT}-task-1
 Branch: feature-task-1
 
-YOUR TASK:
+## Your Task
 [Specific task description from plan]
 
-CONSTRAINTS:
+## Steps
+1. [Read relevant files]
+2. [Create/modify files in scope]
+3. [Commit with COMPLETE: prefix]
+
+## Constraints
 - Only modify files in your assigned scope
-- Commit frequently with clear messages
-- When done, commit with message starting with "COMPLETE:"
+- Do NOT modify: [frozen files]
+- Commit when done with message starting with "COMPLETE:"
 
-CONTEXT:
-[Relevant context from plan file]
-
-Begin working on your task now.`
-})
-
-// Spawn agent for worktree 2
-Task({
-  subagent_type: "general-purpose",
-  run_in_background: true,
-  prompt: `You are working in worktree: /path/to/${PROJECT}-task-2
-...`
-})
+Begin working now.
+EOF
 ```
 
-#### 4. Track Progress
+Repeat for each worktree with its specific task.
 
-Store agent IDs and output files:
+#### 4. Open Terminal Windows
+
+Use `osascript` to open a Terminal window for each worktree, launching Claude with the task prompt:
+
+```bash
+# Open Terminal for worktree 1
+osascript -e '
+tell application "Terminal"
+    activate
+    do script "cd /path/to/${PROJECT}-task-1 && claude \"$(cat .claude-task.md)\""
+end tell'
+
+# Open Terminal for worktree 2
+osascript -e '
+tell application "Terminal"
+    activate
+    do script "cd /path/to/${PROJECT}-task-2 && claude \"$(cat .claude-task.md)\""
+end tell'
+```
+
+#### 5. Track Progress
+
+Create `.parallel-agents.md` in main worktree:
 
 ```markdown
-# .parallel-agents.md
+# Parallel Development Tracking
 
-## Active Parallel Agents
+**Started**: [date]
+**Task**: [description]
 
-| Agent ID | Worktree | Task | Output File | Status |
-|----------|----------|------|-------------|--------|
-| [id-1] | task-1 | [description] | /tmp/agent-1.out | Running |
-| [id-2] | task-2 | [description] | /tmp/agent-2.out | Running |
+## Active Worktrees
 
-## Commands
+| Worktree | Branch | Task | Status |
+|----------|--------|------|--------|
+| ../${PROJECT}-task-1 | feature-task-1 | [description] | Running |
+| ../${PROJECT}-task-2 | feature-task-2 | [description] | Running |
 
-Check progress: `/parallel status`
-Stop an agent: Use TaskStop with agent ID
-Merge results: `/parallel merge-all`
+## Completion Check
+
+Run from main worktree:
+git log --oneline -1 ../${PROJECT}-task-1  # Look for COMPLETE:
+git log --oneline -1 ../${PROJECT}-task-2  # Look for COMPLETE:
+
+## When All Complete
+
+Run: /parallel merge-all
 ```
 
-#### 5. Monitor Loop
+#### 6. Monitor Completion
 
-Provide status updates and wait for completion:
+Check each worktree for COMPLETE: commits:
 
-```typescript
-// Check agent outputs periodically
-for (const agent of activeAgents) {
-  const output = await TaskOutput({
-    task_id: agent.id,
-    block: false,  // Non-blocking check
-    timeout: 1000
-  });
-
-  if (output.status === "completed") {
-    // Agent finished, check for COMPLETE: commit
-  }
-}
+```bash
+# Check all worktrees for completion
+for worktree in $(git worktree list --porcelain | grep "^worktree" | awk '{print $2}'); do
+  echo "$worktree: $(cd $worktree && git log -1 --oneline)"
+done
 ```
 
-### Prompt Templates for Spawned Agents
+### Task Prompt Templates (.claude-task.md)
 
-#### Skill Building Agent
-```
-You are building a skill in: [worktree path]
+#### Skill Building Task
+```markdown
+# Task: Build [skill-name] Skill
 
+You are working in worktree: [worktree path]
+Branch: [branch-name]
+
+## Your Task
 Create the following files:
 1. .claude/skills/[skill-name]/SKILL.md
 2. .claude/skills/[skill-name]/references/[ref1].md
@@ -147,41 +168,57 @@ Create the following files:
 4. .claude/agents/[agent1].md
 5. .claude/commands/[command1].md
 
-Follow these patterns:
-[Include relevant patterns from existing skills]
+## Reference Patterns
+Read existing skills to follow patterns:
+- .claude/skills/product-strategy/SKILL.md (for structure)
+- .claude/skills/agent-native-architecture/SKILL.md (for depth)
 
-When complete, commit with: "COMPLETE: Add [skill-name] skill"
+## Constraints
+- Only create files in .claude/ directory
+- Do NOT modify existing files
+- Commit when done with: "COMPLETE: Add [skill-name] skill"
+
+Begin working now.
 ```
 
-#### Feature Development Agent
-```
-You are implementing a feature in: [worktree path]
+#### Feature Development Task
+```markdown
+# Task: Implement [feature-name]
 
-Feature: [Feature description from PRD]
+You are working in worktree: [worktree path]
+Branch: [branch-name]
 
-Your scope (only modify these):
+## Your Task
+[Feature description from PRD]
+
+## Your Scope (only modify these)
 - src/features/[feature]/
 - src/components/[related]/
 - tests/[feature]/
 
-Do NOT modify:
-- package.json (shared)
-- src/lib/ (shared)
+## Do NOT Modify (frozen/shared)
+- package.json
+- src/lib/
 
-When complete, commit with: "COMPLETE: Implement [feature]"
+## Constraints
+- Commit when done with: "COMPLETE: Implement [feature]"
+
+Begin working now.
 ```
 
-### Example: Building 2 Skills in Parallel
+### Example: Building 2 Doc Guides in Parallel
 
 ```
-User: /parallel spawn --tasks="mcp-design,agent-testing"
+User: /parallel spawn --tasks="skills-guide,commands-guide"
 
-Agent Actions:
-1. git worktree add ../toolkit-mcp-design -b feature-mcp-design
-2. git worktree add ../toolkit-agent-testing -b feature-agent-testing
-3. Task(background=true, prompt="Build mcp-design skill in /path/to/toolkit-mcp-design...")
-4. Task(background=true, prompt="Build agent-testing skill in /path/to/toolkit-agent-testing...")
-5. Output: "Spawned 2 agents. Run `/parallel status` to check progress."
+Orchestrator Actions:
+1. git worktree add ../toolkit-docs-skills -b feature-docs-skills
+2. git worktree add ../toolkit-docs-commands -b feature-docs-commands
+3. Write .claude-task.md in each worktree with specific task
+4. osascript opens Terminal window 1: cd ../toolkit-docs-skills && claude "$(cat .claude-task.md)"
+5. osascript opens Terminal window 2: cd ../toolkit-docs-commands && claude "$(cat .claude-task.md)"
+6. Output: "Opened 2 terminals. Approve permissions as agents work."
+7. When done: /parallel merge-all
 ```
 
 ---

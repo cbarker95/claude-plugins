@@ -92,25 +92,26 @@ Structure the work so coordination happens through the system, not conversation:
 <automated_spawning>
 ## Automated Agent Spawning
 
-The most powerful pattern: spawn background Task agents that work in parallel without requiring the user to open multiple terminals.
+The most powerful pattern: create worktrees, generate task prompts, and open terminal windows where Claude instances work in parallel with full interactive permissions.
 
 ### How It Works
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│                      Single Claude Instance                       │
+│                    Orchestrator Claude Instance                    │
 ├──────────────────────────────────────────────────────────────────┤
 │  1. Create worktrees for each task                                │
-│  2. Spawn background Task agents with prompts                     │
-│  3. Each agent works in its worktree                             │
-│  4. Monitor progress via TaskOutput                              │
-│  5. Merge all when complete                                       │
+│  2. Write .claude-task.md prompt file in each worktree            │
+│  3. Open Terminal tabs via osascript                              │
+│  4. Each tab runs: claude "$(cat .claude-task.md)"                │
+│  5. User approves permissions across terminals                    │
+│  6. Merge all when complete                                       │
 └──────────────────────────────────────────────────────────────────┘
          │                    │                    │
          ▼                    ▼                    ▼
     ┌─────────┐          ┌─────────┐          ┌─────────┐
-    │ Agent 1 │          │ Agent 2 │          │ Agent 3 │
-    │ (bg)    │          │ (bg)    │          │ (bg)    │
+    │ Term 1  │          │ Term 2  │          │ Term 3  │
+    │ Claude  │          │ Claude  │          │ Claude  │
     │ Task A  │          │ Task B  │          │ Task C  │
     └─────────┘          └─────────┘          └─────────┘
          │                    │                    │
@@ -123,6 +124,10 @@ The most powerful pattern: spawn background Task agents that work in parallel wi
                        └─────────────┘
 ```
 
+### Why Terminal Tabs (Not Background Agents)
+
+Background Task agents cannot get user permission prompts — Bash and Write tools are auto-denied. Interactive terminal sessions solve this: each Claude instance can request and receive permission approvals from the user.
+
 ### Usage
 
 ```
@@ -130,48 +135,65 @@ The most powerful pattern: spawn background Task agents that work in parallel wi
 ```
 
 This will:
-1. Create 3 worktrees
-2. Spawn 3 background agents with specific prompts
-3. Return immediately with agent IDs
-4. Agents work in background
-5. Use `/parallel status` to check progress
-6. Use `/parallel merge-all` when all complete
+1. Create 3 worktrees with feature branches
+2. Write `.claude-task.md` prompt files in each worktree
+3. Open 3 Terminal windows via `osascript`
+4. Each terminal runs `claude "$(cat .claude-task.md)"`
+5. User approves permissions as agents work
+6. Agents commit with "COMPLETE:" prefix when done
+7. Return to orchestrator and run `/parallel merge-all`
 
-### Agent Prompt Template
+### Task Prompt File (.claude-task.md)
 
-Each spawned agent receives:
+Each worktree gets a `.claude-task.md` file containing the full task specification:
 
-```
+```markdown
+# Task: [Task Name]
+
 You are working in worktree: [path]
 Branch: [branch-name]
 
-YOUR TASK:
-[Specific task from plan or user input]
+## Your Task
+[Specific task description from plan]
 
-CONSTRAINTS:
+## Steps
+1. [Step 1]
+2. [Step 2]
+3. [Step 3]
+
+## Constraints
 - Only modify files in your assigned scope
-- Commit frequently with clear messages
-- When done, commit with message starting with "COMPLETE:"
-
-CONTEXT:
-[Plan file contents or other context]
+- Do NOT modify: [list of frozen files]
+- Commit when done with message starting with "COMPLETE:"
 
 Begin working now.
+```
+
+### Opening Terminal Tabs (macOS)
+
+```bash
+# For each worktree, open a Terminal window with Claude
+osascript -e '
+tell application "Terminal"
+    activate
+    do script "cd [worktree-path] && claude \"$(cat .claude-task.md)\""
+end tell'
 ```
 
 ### Completion Detection
 
 Agents signal completion by:
 1. Making a commit with message starting with "COMPLETE:"
-2. The spawn controller checks for this via git log
+2. The orchestrator checks via: `cd [worktree] && git log -1 --oneline | grep "^COMPLETE:"`
 
 ### Why This Scales
 
-- **No terminal juggling** — User stays in one terminal
-- **True parallelism** — All agents work simultaneously
-- **Automatic coordination** — Prompts define boundaries
-- **Easy monitoring** — Single status command shows all progress
+- **Full permissions** — Each terminal is interactive, user can approve tools
+- **True parallelism** — All Claude instances work simultaneously
+- **Automatic coordination** — Task prompts define boundaries
+- **Easy monitoring** — User sees all terminals, can check any at a glance
 - **Clean merge** — All branches merge in sequence when done
+- **No juggling** — Orchestrator creates everything, user just approves
 </automated_spawning>
 
 <intake>
