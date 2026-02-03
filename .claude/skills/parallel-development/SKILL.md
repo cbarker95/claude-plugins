@@ -89,15 +89,101 @@ Structure the work so coordination happens through the system, not conversation:
 **Test:** Does parallel work require active coordination?
 </core_principles>
 
+<automated_spawning>
+## Automated Agent Spawning
+
+The most powerful pattern: spawn background Task agents that work in parallel without requiring the user to open multiple terminals.
+
+### How It Works
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                      Single Claude Instance                       │
+├──────────────────────────────────────────────────────────────────┤
+│  1. Create worktrees for each task                                │
+│  2. Spawn background Task agents with prompts                     │
+│  3. Each agent works in its worktree                             │
+│  4. Monitor progress via TaskOutput                              │
+│  5. Merge all when complete                                       │
+└──────────────────────────────────────────────────────────────────┘
+         │                    │                    │
+         ▼                    ▼                    ▼
+    ┌─────────┐          ┌─────────┐          ┌─────────┐
+    │ Agent 1 │          │ Agent 2 │          │ Agent 3 │
+    │ (bg)    │          │ (bg)    │          │ (bg)    │
+    │ Task A  │          │ Task B  │          │ Task C  │
+    └─────────┘          └─────────┘          └─────────┘
+         │                    │                    │
+         └──────── All commit "COMPLETE:" ────────┘
+                              │
+                              ▼
+                       ┌─────────────┐
+                       │ Merge All   │
+                       │ Clean Up    │
+                       └─────────────┘
+```
+
+### Usage
+
+```
+/parallel spawn --tasks="task-1,task-2,task-3"
+```
+
+This will:
+1. Create 3 worktrees
+2. Spawn 3 background agents with specific prompts
+3. Return immediately with agent IDs
+4. Agents work in background
+5. Use `/parallel status` to check progress
+6. Use `/parallel merge-all` when all complete
+
+### Agent Prompt Template
+
+Each spawned agent receives:
+
+```
+You are working in worktree: [path]
+Branch: [branch-name]
+
+YOUR TASK:
+[Specific task from plan or user input]
+
+CONSTRAINTS:
+- Only modify files in your assigned scope
+- Commit frequently with clear messages
+- When done, commit with message starting with "COMPLETE:"
+
+CONTEXT:
+[Plan file contents or other context]
+
+Begin working now.
+```
+
+### Completion Detection
+
+Agents signal completion by:
+1. Making a commit with message starting with "COMPLETE:"
+2. The spawn controller checks for this via git log
+
+### Why This Scales
+
+- **No terminal juggling** — User stays in one terminal
+- **True parallelism** — All agents work simultaneously
+- **Automatic coordination** — Prompts define boundaries
+- **Easy monitoring** — Single status command shows all progress
+- **Clean merge** — All branches merge in sequence when done
+</automated_spawning>
+
 <intake>
 ## What parallel development task do you need?
 
-1. **Setup worktrees** — Create parallel worktrees for a project with proper branch structure
-2. **Slice work** — Analyze a project and suggest vertical slicing for parallel development
-3. **Sync worktree** — Fetch latest changes, rebase, and run tests
-4. **Merge worktree** — Merge a completed feature branch to main
-5. **Coordinate work** — Get guidance on multi-agent coordination patterns
-6. **Troubleshoot conflicts** — Resolve merge conflicts from parallel work
+1. **Spawn parallel agents** — Create worktrees AND spawn background agents automatically (recommended)
+2. **Setup worktrees only** — Create parallel worktrees (manual terminal launch)
+3. **Slice work** — Analyze a project and suggest vertical slicing for parallel development
+4. **Check status** — View status of all worktrees and running agents
+5. **Sync worktree** — Fetch latest changes, rebase, and run tests
+6. **Merge all** — Merge all completed feature branches to main
+7. **Coordinate work** — Get guidance on multi-agent coordination patterns
 
 **Wait for response before proceeding.**
 </intake>
@@ -105,12 +191,13 @@ Structure the work so coordination happens through the system, not conversation:
 <routing>
 | Response | Action |
 |----------|--------|
-| 1, "setup", "create", "worktree" | Read [git-worktree-patterns.md](./references/git-worktree-patterns.md), run `/parallel setup` |
-| 2, "slice", "split", "divide" | Read [vertical-slicing.md](./references/vertical-slicing.md), run `/slice` |
-| 3, "sync", "rebase", "update" | Read [merge-strategies.md](./references/merge-strategies.md), run `/parallel sync` |
-| 4, "merge", "integrate", "complete" | Read [merge-strategies.md](./references/merge-strategies.md), run `/parallel merge` |
-| 5, "coordinate", "multi-agent", "parallel" | Read [coordination-patterns.md](./references/coordination-patterns.md) |
-| 6, "conflict", "resolve", "trouble" | Read [merge-strategies.md](./references/merge-strategies.md) (conflict resolution section) |
+| 1, "spawn", "auto", "background" | Run `/parallel spawn` — Creates worktrees and spawns background Task agents |
+| 2, "setup", "create", "worktree" | Read [git-worktree-patterns.md](./references/git-worktree-patterns.md), run `/parallel setup` |
+| 3, "slice", "split", "divide" | Read [vertical-slicing.md](./references/vertical-slicing.md), run `/slice` |
+| 4, "status", "check", "progress" | Run `/parallel status` — Shows worktrees and background agent progress |
+| 5, "sync", "rebase", "update" | Read [merge-strategies.md](./references/merge-strategies.md), run `/parallel sync` |
+| 6, "merge", "integrate", "complete" | Run `/parallel merge-all` — Merges all completed branches |
+| 7, "coordinate", "multi-agent", "parallel" | Read [coordination-patterns.md](./references/coordination-patterns.md) |
 
 **After reading references, apply patterns to the user's specific context.**
 </routing>
